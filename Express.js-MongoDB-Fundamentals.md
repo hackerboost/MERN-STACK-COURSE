@@ -402,7 +402,7 @@ npm start
 
 ---
 
-## 🤔 Common Student Questions
+## 🤔 FAQs
 
 ### Q: Why do we need both MongoDB and Mongoose?
 **A:** MongoDB is the database itself, Mongoose is a tool that makes it easier to work with MongoDB from Node.js.
