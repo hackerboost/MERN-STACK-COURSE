@@ -1,4 +1,3 @@
-# 🚀 MERN Stack Backend Development
 ## Express.js & MongoDB Fundamentals
 ### Building the Foundation for Product Store
 *A Step-by-Step Journey*
