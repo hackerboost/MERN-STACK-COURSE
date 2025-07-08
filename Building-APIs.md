@@ -35,6 +35,7 @@ Imagine you're hungry and want to order food:
 - The waiter brings it back to you
 
 ![Figure: Real-world Analogy of an API](/Figure_Real_world_Analogy_of_an_API_2f5cee9677.png)
+Image source: zilliz.com
 
 ### In Web Terms:
 
@@ -154,169 +155,17 @@ A **schema** is like a blueprint for your data. Just like building a house, you 
 }
 ```
 
-### Creating Our First Schema: User
-
-Let's build a User schema step by step, explaining every decision:
-
-```javascript
-// models/User.js
-const mongoose = require('mongoose');
-
-// Why mongoose? It's like a translator between JavaScript and MongoDB
-const userSchema = new mongoose.Schema({
-  // User's name
-  name: {
-    type: String,              // Why String? Names are text
-    required: [true, 'Name is required'],  // Why required? Every user needs a name
-    trim: true,                // Why trim? Removes extra spaces ("  John  " becomes "John")
-    minlength: [2, 'Name must be at least 2 characters'],  // Why? Single letters aren't real names
-    maxlength: [50, 'Name cannot exceed 50 characters']    // Why? Prevents spam/abuse
-  },
-```
-
-**Let me explain each part:**
-
-#### `type: String`
-**Why?** Names are text, not numbers. If someone tries to save a number as a name, Mongoose will reject it.
-
-#### `required: [true, 'Custom error message']`
-**Why?** Every user must have a name. The custom message tells the user exactly what went wrong.
-
-#### `trim: true`
-**Why?** Users often accidentally add spaces. "  John  " becomes "John". This prevents database inconsistencies.
-
-#### `minlength` and `maxlength`
-**Why?** Prevents abuse. Someone can't register with name "A" or copy-paste a whole book as their name.
-
-Let's continue building the User schema:
-
-```javascript
-  email: {
-    type: String,
-    required: [true, 'Email is required'],
-    unique: true,              // Why? No two users can have the same email
-    lowercase: true,           // Why? "JOHN@EMAIL.COM" becomes "john@email.com"
-    match: [                   // Why? Validates email format
-      /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
-      'Please enter a valid email'
-    ]
-  },
-```
-
-#### `unique: true`
-**Why?** Emails are like usernames - only one person can have each email address. This prevents duplicate accounts.
-
-#### `lowercase: true`
-**Why?** "John@Email.Com" and "john@email.com" are the same email, but computers see them as different. This fixes that.
-
-#### `match: [regex, error message]`
-**Why?** Ensures the email looks like an email (has @ symbol, domain, etc.). The regex (regular expression) is a pattern that checks email format.
-
-```javascript
-  password: {
-    type: String,
-    required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters'],
-    select: false              // Why? NEVER send passwords back to frontend
-  },
-```
-
-#### `select: false`
-**Why?** This is CRUCIAL for security. When we fetch user data, the password should NEVER be included in the response. Even though it's encrypted, it's safer to never send it.
-
-```javascript
-  role: {
-    type: String,
-    enum: {                    // Why enum? Limits choices
-      values: ['user', 'admin'],
-      message: 'Role must be either user or admin'
-    },
-    default: 'user'            // Why default? Most people are regular users, not admins
-  },
-```
-
-#### `enum` (enumeration)
-**Why?** Limits choices to prevent mistakes. Someone can't accidentally set their role to "superman" or "hacker". Only "user" or "admin" are allowed.
-
-#### `default: 'user'`
-**Why?** If no role is specified, assume they're a regular user. This is safer than making them an admin by accident.
-
-Now let's add timestamps:
-
-```javascript
-}, {
-  timestamps: true             // Why? Automatically adds createdAt and updatedAt
-});
-```
-
-#### `timestamps: true`
-**Why?** MongoDB automatically adds `createdAt` (when the user was created) and `updatedAt` (when the user was last modified). This is useful for tracking user activity and debugging.
-
-### Adding Middleware to Hash Passwords
-
-```javascript
-// This runs BEFORE saving a user to the database
-userSchema.pre('save', async function(next) {
-  // Only hash the password if it was modified
-  if (!this.isModified('password')) return next();
-  
-  // Hash the password
-  this.password = await bcrypt.hash(this.password, 12);
-  next();
-});
-```
-
-**Let me explain this step by step:**
-
-#### Why do we need to hash passwords?
-**Problem:** If someone hacks our database and sees this:
-```javascript
-{ name: "John", email: "john@email.com", password: "mypassword123" }
-```
-They immediately know John's password!
-
-**Solution:** Hash the password so it looks like this:
-```javascript
-{ name: "John", email: "john@email.com", password: "$2b$12$xyz123randomhash..." }
-```
-Even if hackers see this, they can't figure out the original password.
-
-#### `userSchema.pre('save')`
-**Why "pre"?** This runs BEFORE saving to the database. It's like a checkpoint that transforms the data before storing it.
-
-#### `if (!this.isModified('password')) return next()`
-**Why this check?** If a user updates their name but not their password, we don't want to hash the already-hashed password again. That would break it!
-
-#### `bcrypt.hash(this.password, 12)`
-**Why bcrypt?** It's a special algorithm designed for hashing passwords. The "12" is the "salt rounds" - higher numbers are more secure but slower.
-
-### Adding Instance Methods
-
-```javascript
-// Method to check if entered password matches hashed password
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
-};
-```
-
-#### Why do we need this method?
-When a user logs in, they enter their plain text password. We need to check if it matches the hashed password in our database. This method does that comparison.
-
-**How it works:**
-1. User enters: "mypassword123"
-2. Database has: "$2b$12$xyz123randomhash..."
-3. `comparePassword` checks if they match
-4. Returns true or false
-
 ---
+
+### Creating Our First Schema
 
 ## 🛒 Building the Product Schema
 
 Now let's create a schema for products. I'll explain every decision:
 
 ```javascript
-// models/Product.js
-const mongoose = require('mongoose');
+// models/product.model.js
+import mongoose from 'mongoose';
 
 const productSchema = new mongoose.Schema({
   name: {
