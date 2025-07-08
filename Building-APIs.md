@@ -34,6 +34,7 @@ Imagine you're hungry and want to order food:
 - The kitchen prepares your food
 - The waiter brings it back to you
 
+![Figure: Real-world Analogy of an API](/Figure_Real_world_Analogy_of_an_API_2f5cee9677.png)
 
 ### In Web Terms:
 
